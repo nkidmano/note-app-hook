@@ -42,6 +42,18 @@ app.post('/note', (req, res) => {
   });
 });
 
+app.post('/note/delete', (req, res) => {
+  fs.readFile(NOTE_DATA_FILE, (err, data) => {
+    const notes = JSON.parse(data);
+    const updatedNotes = notes.filter(n => n.id !== req.body.id);
+
+    fs.writeFile(NOTE_DATA_FILE, JSON.stringify(updatedNotes, null, 4), () => {
+      res.setHeader('Cache-Control', 'no-cache');
+      res.json(updatedNotes);
+    });
+  });
+});
+
 app.listen(app.get('port'), () => {
   console.log(`Find the server at: http://localhost:${app.get('port')}/`);
 });

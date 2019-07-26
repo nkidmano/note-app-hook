@@ -1,43 +1,67 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useReducer } from 'react';
+import { produce } from 'immer';
 
 const API_URL = 'http://localhost:3333';
 
-function App() {
-  const [notes, setNotes] = useState([]);
-  const [noteInput, setNoteInput] = useState('');
+function noteReducer(draft, action) {
+  switch (action.type) {
+    case 'field': {
+      draft[action.fieldName] = action.payload;
+      return;
+    }
+    case 'fetch': {
+      draft.notes = action.payload;
+      return;
+    }
+    case 'add': {
+      draft.notes.push(action.payload);
+      draft.noteInput = '';
+      return;
+    }
+    default:
+      return;
+  }
+}
 
-  const addNote = useCallback(event => {
-    if (event.key === 'Enter') {
+const initialState = {
+  notes: [],
+  noteInput: '',
+};
+
+function App() {
+  const [state, dispatch] = useReducer(produce(noteReducer), initialState);
+  const { notes, noteInput } = state;
+
+  useEffect(() => {
+    fetch(API_URL + '/note')
+      .then(response => response.json())
+      .then(response => dispatch({ type: 'fetch', payload: response }));
+  }, []);
+
+  function addNote(event) {
+    if (event.key === 'Enter' && noteInput.trim() !== '') {
+      const newNote = createNote();
+
       fetch(API_URL + '/note', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Origin': '*',
         },
-        body: JSON.stringify({
-          id: Date.now(),
-          content: noteInput,
-          timestamp: new Date().toLocaleString(),
-        }),
+        body: JSON.stringify(newNote),
       });
-      setNoteInput('');
+
+      dispatch({ type: 'add', payload: newNote });
+
+      function createNote() {
+        const result = {};
+        result.id = Date.now();
+        result.content = noteInput;
+        result.timestamp = new Date().toLocaleString();
+        return result;
+      }
     }
-  }, []);
-
-  useEffect(() => {
-    fetch(API_URL + '/note')
-      .then(response => response.json())
-      .then(response => setNotes(response));
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetch(API_URL + '/note')
-        .then(response => response.json())
-        .then(response => setNotes(response));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  }
 
   return (
     <div className='app'>
@@ -66,7 +90,13 @@ function App() {
           type='text'
           value={noteInput}
           onKeyPress={addNote}
-          onChange={event => setNoteInput(event.target.value)}
+          onChange={event =>
+            dispatch({
+              type: 'field',
+              fieldName: 'noteInput',
+              payload: event.target.value,
+            })
+          }
         />
       </div>
       <div className='note-count'>
