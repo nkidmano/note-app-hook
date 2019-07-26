@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useCallback } from 'react';
 import { produce } from 'immer';
 
 const API_URL = 'http://localhost:3333';
@@ -32,9 +32,22 @@ const initialState = {
   noteInput: '',
 };
 
+// shoud you Map
+function useCheckbox(initial) {
+  const [value, setValue] = useState(initial);
+  const result = {};
+  result.value = value;
+  result.setValue = setValue;
+  result.check = useCallback(index =>
+    setValue(v => [...v].splice(index, 1, !value[index]))
+  );
+  return result;
+}
+
 function App() {
   const [state, dispatch] = useReducer(produce(noteReducer), initialState);
   const { notes, noteInput } = state;
+  const noteCheckbox = useCheckbox(notes);
 
   useEffect(() => {
     fetch(API_URL + '/note')
@@ -112,6 +125,15 @@ function App() {
                 >
                   X
                 </strong>
+              </div>
+            ))}
+          </div>
+
+          <div className='column has-text-centered'>
+            <button>Delete selected</button>
+            {notes.map(note => (
+              <div key={note.id} className='notes'>
+                <input type='checkbox' value={note.id} />
               </div>
             ))}
           </div>
