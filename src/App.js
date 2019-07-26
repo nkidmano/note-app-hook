@@ -18,6 +18,10 @@ function noteReducer(draft, action) {
       draft.noteInput = '';
       return;
     }
+    case 'delete': {
+      draft.notes = draft.notes.filter(note => note.id !== action.payload);
+      return;
+    }
     default:
       return;
   }
@@ -63,6 +67,21 @@ function App() {
     }
   }
 
+  function deleteNote(noteId) {
+    fetch(API_URL + '/note/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Origin': '*',
+      },
+      body: JSON.stringify({
+        id: noteId,
+      }),
+    });
+
+    dispatch({ type: 'delete', payload: noteId });
+  }
+
   return (
     <div className='app'>
       <div className='notes-section'>
@@ -80,6 +99,19 @@ function App() {
             {notes.map(note => (
               <div key={note.id} className='notes'>
                 {note.timestamp}
+              </div>
+            ))}
+          </div>
+          <div className='column has-text-centered'>
+            <strong>Delete</strong>
+            {notes.map(note => (
+              <div key={note.id} className='notes'>
+                <strong
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => deleteNote(note.id)}
+                >
+                  X
+                </strong>
               </div>
             ))}
           </div>

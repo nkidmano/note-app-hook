@@ -47,7 +47,7 @@ app.post('/note/delete', (req, res) => {
     const notes = JSON.parse(data);
     const updatedNotes = notes.filter(n => n.id !== req.body.id);
 
-    fs.writeFile(NOTE_DATA_FILE, JSON.stringify(updatedNotes, null, 4), () => {
+    fs.writeFile(NOTE_DATA_FILE, JSON.stringify(updatedNotes, null, 2), () => {
       res.setHeader('Cache-Control', 'no-cache');
       res.json(updatedNotes);
     });
